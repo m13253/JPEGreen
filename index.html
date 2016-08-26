@@ -22,6 +22,12 @@ body {
 }
 .header, .footer {
     margin-left: 14pt;
+    margin-right: 14pt;
+}
+.inlineBlock {
+    display: inline-block;
+    margin-left: 0.5em;
+    margin-right: 0.5em;
 }
 #downloadLink {
     display: none;
@@ -40,19 +46,13 @@ body {
 #iters {
     width: 3em;
 }
-#currentIter {
+#currentIter, #qualityText {
     display: inline-block;
-    padding-right: 1em;
     text-align: right;
     width: 2em;
 }
 #quality {
     width: 150pt;
-}
-#qualityText {
-    display: inline-block;
-    text-align: right;
-    width: 2em;
 }
 </style>
 </head>
@@ -60,10 +60,14 @@ body {
 <div class="header">
   <p>Android had <a href="https://github.com/google/skia/commit/c7d01d3e1d3621907c27b283fb7f8b6e177c629d" target="_blank">a bug causing pictures to be a slightly greener after load & save</a>. This WebApp will simulate this process.</p>
   <p>
-    <label for="imageLoader">Select an image:&#32;</label>
-    <input type="file" id="imageLoader" accept="image/*" />
-    <button id="downloadBtn" disabled="disabled">Download result</button>
-    <a id="downloadLink"></a>
+    <span class="inlineBlock">
+      <label for="imageLoader">Select an image:&#32;</label>
+      <input type="file" id="imageLoader" accept="image/*" />
+    </span>
+    <span class="inlineBlock">
+      <button id="downloadBtn" disabled="disabled">Download result</button>
+      <a id="downloadLink"></a>
+    </span>
   </p>
 </div>
 <div class="content">
@@ -72,14 +76,20 @@ body {
 </div>
 <div class="footer">
   <p>
-    <label for="iters">Iterations:&#32;</label>
-    <input type="number" id="iterbox" min="0" max="9999" value="16" />
-    <span>&#32;Current:&#32;</span>
-    <span id="currentIter">0</span>
-    <label for="quality">&#32;Quality:&#32;</label>
-    <input type="range" id="quality" min="0" max="101" value="75" />
-    <span>&#32;</span>
-    <span id="qualityText">75%</span>
+    <span class="inlineBlock">
+      <label for="iters">Iterations: </label>
+      <input type="number" id="iterbox" min="0" max="9999" value="16" />
+    </span>
+    <span class="inlineBlock">
+      <span>Current: </span>
+      <span id="currentIter">0</span>
+    </span>
+    <span class="inlineBlock">
+      <label for="quality">Quality: </label>
+      <input type="range" id="quality" min="0" max="101" value="75" />
+      <span> </span>
+      <span id="qualityText">75%</span>
+    </span>
   </p>
   <p>Copyright &copy; 2016 Star Brilliant. All rights reserved.</p>
 </div>
