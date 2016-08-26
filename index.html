@@ -98,117 +98,116 @@ a:visited {
 <script language="javascript">
 (() => {
     "use strict";
-    const canvas = document.createElement("canvas")
-    const ctx = canvas.getContext("2d")
-    const currentIter = document.getElementById("currentIter")
-    const downloadBtn = document.getElementById("downloadBtn")
-    const downloadLink = document.getElementById("downloadLink")
-    const greenImg = document.getElementById("greenImg")
-    const image = new Image()
-    const imageLoader = document.getElementById("imageLoader")
-    const iterBox = document.getElementById("iterbox")
-    const origImg = document.getElementById("origImg")
-    const qualityBox = document.getElementById("quality")
-    const qualityText = document.getElementById("qualityText")
-    const clamp = x => x >= 0 ? x <= 255 ? x : 255 : 0
-    const clampuv = x => x >= -128 ? x <= 127 ? x : 127 : -128
-    let curiter = 0
-    let iter = 16
-    let quality = 75
-    let imageName = "image"
-    let imageSrc
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const currentIter = document.getElementById("currentIter");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const downloadLink = document.getElementById("downloadLink");
+    const greenImg = document.getElementById("greenImg");
+    const image = new Image();
+    const imageLoader = document.getElementById("imageLoader");
+    const iterBox = document.getElementById("iterbox");
+    const origImg = document.getElementById("origImg");
+    const qualityBox = document.getElementById("quality");
+    const qualityText = document.getElementById("qualityText");
+    const clamp = x => x >= 0 ? x <= 255 ? x : 255 : 0;
+    const clampuv = x => x >= -128 ? x <= 127 ? x : 127 : -128;
+    let curiter = 0;
+    let iter = 16;
+    let quality = 75;
+    let imageName = "image";
+    let imageSrc;
     const updateInput = () => {
-        let iter = parseInt(iterBox.value)
+        let iter = parseInt(iterBox.value);
         if(Number.isNaN(iter)) {
-            iter = 16
+            iter = 16;
         }
-        let quality = parseInt(qualityBox.value)
+        let quality = parseInt(qualityBox.value);
         if(Number.isNaN(quality)) {
-            quality = 75
+            quality = 75;
         }
-        qualityText.innerText = quality <= 100 ? quality + "%" : "lossless"
-        return [iter, quality]
+        qualityText.innerText = quality <= 100 ? quality + "%" : "lossless";
+        return [iter, quality];
     }
     const resetProcess = () => {
-        [iter, quality] = updateInput()
-        downloadBtn.disabled = true
-        curiter = 0
-        currentIter.innerText = 0
+        [iter, quality] = updateInput();
+        downloadBtn.disabled = true;
+        curiter = 0;
+        currentIter.innerText = 0;
         if(imageSrc) {
-            image.src = imageSrc
+            image.src = imageSrc;
         }
     }
     const updateIter = () => {
-        [iter, quality] = updateInput()
+        [iter, quality] = updateInput();
         if(curiter <= iter) {
-            requestAnimationFrame(processImage)
+            requestAnimationFrame(processImage);
         } else {
-            resetProcess()
+            resetProcess();
         }
     }
     const processImage = () => {
         if(curiter == iter) {
-            downloadBtn.disabled = false
-            return
+            downloadBtn.disabled = false;
+            return;
         }
-        ++curiter
-        canvas.width = image.width
-        canvas.height = image.height
-        ctx.fillStyle = "white"
-        ctx.fillRect(0, 0, image.width, image.height)
-        ctx.drawImage(image, 0, 0)
-        const imageData = ctx.getImageData(0, 0, image.width, image.height)
-        const data = imageData.data
+        ++curiter;
+        canvas.width = image.width;
+        canvas.height = image.height;
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, image.width, image.height);
+        ctx.drawImage(image, 0, 0);
+        const imageData = ctx.getImageData(0, 0, image.width, image.height);
+        const data = imageData.data;
         for(let p = 0; p < data.length/4; ++p) {
-            let r = data[p*4];
-            let g = data[p*4+1];
-            let b = data[p*4+2];
-            const y = clamp  (( 77*r + 150*g +  29*b) >> 8)
-            const u = clampuv(((-43*r -  85*g + 128*b) >> 8) - 1)
-            const v = clampuv(((128*r - 107*g -  21*b) >> 8) - 1)
-            r = clamp((65536*y           + 91881*v) >> 16)
-            g = clamp((65536*y - 22553*u - 46802*v) >> 16)
-            b = clamp((65536*y + 116130*u         ) >> 16)
-            data[p*4]   = r
-            data[p*4+1] = g
-            data[p*4+2] = b
+            const r = data[p*4  ];
+            const g = data[p*4+1];
+            const b = data[p*4+2];
+            const y = clamp  ((  77*r + 150*g +  29*b) >> 8);
+            const u = clampuv(((-43*r -  85*g + 128*b) >> 8) - 1);
+            const v = clampuv(((128*r - 107*g -  21*b) >> 8) - 1);
+            const r1 = clamp((65536*y           + 91881*v) >> 16);
+            const g1 = clamp((65536*y - 22553*u - 46802*v) >> 16);
+            const b1 = clamp((65536*y + 116130*u         ) >> 16);
+            data[p*4  ] = r1;
+            data[p*4+1] = g1;
+            data[p*4+2] = b1;
         }
-        ctx.putImageData(imageData, 0, 0)
-        const dataURL = quality <= 100 ? canvas.toDataURL("image/jpeg", quality * 0.01) : canvas.toDataURL("image/png")
-        greenImg.style.backgroundImage = `url("${dataURL}")`
-        currentIter.innerText = curiter
-        image.src = dataURL
+        ctx.putImageData(imageData, 0, 0);
+        const dataURL = quality <= 100 ? canvas.toDataURL("image/jpeg", quality * 0.01) : canvas.toDataURL("image/png");
+        greenImg.style.backgroundImage = `url("${dataURL}")`;
+        currentIter.innerText = curiter;
+        image.src = dataURL;
     }
     image.addEventListener("load", () => {
-        requestAnimationFrame(processImage)
+        requestAnimationFrame(processImage);
     })
     imageLoader.addEventListener("change", () => {
         if(imageLoader.files.length != 0) {
-            const file = imageLoader.files[0]
-            imageName = file.name
-            const reader = new FileReader()
+            const file = imageLoader.files[0];
+            imageName = file.name;
+            const reader = new FileReader();
             reader.addEventListener("load", () => {
-                imageSrc = reader.result
-                greenImg.style.backgroundImage =
-                origImg.style.backgroundImage = `url("${imageSrc}")`
-                resetProcess()
+                imageSrc = reader.result;
+                greenImg.style.backgroundImage = origImg.style.backgroundImage = `url("${imageSrc}")`;
+                resetProcess();
             })
-            reader.readAsDataURL(file)
+            reader.readAsDataURL(file);
         }
     })
     downloadBtn.addEventListener("click", () => {
         if(image.src) {
-            const dotIndex = imageName.lastIndexOf(".")
-            downloadLink.download = (dotIndex == -1 ? imageName : imageName.substring(0, dotIndex)) + (quality <= 100 ? "_JPEGreen.jpg" : "_JPEGreen.png")
-            downloadLink.href = image.src
-            downloadLink.click()
+            const dotIndex = imageName.lastIndexOf(".");
+            downloadLink.download = (dotIndex == -1 ? imageName : imageName.substring(0, dotIndex)) + (quality <= 100 ? "_JPEGreen.jpg" : "_JPEGreen.png");
+            downloadLink.href = image.src;
+            downloadLink.click();
         }
     })
-    iterBox.addEventListener("change", updateIter)
-    iterBox.addEventListener("input", updateInput)
-    qualityBox.addEventListener("change", resetProcess)
-    qualityBox.addEventListener("input", updateInput)
-})()
+    iterBox.addEventListener("change", updateIter);
+    iterBox.addEventListener("input", updateInput);
+    qualityBox.addEventListener("change", resetProcess);
+    qualityBox.addEventListener("input", updateInput);
+})();
 </script>
 </body>
 </html>
