@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>JPEGreen Simulator</title>
+<style>
+html {
+    height: 100%;
+    margin: 0px;
+}
+body {
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    height: 100%;
+    margin: 0px;
+}
+.header, .footer {
+    margin-left: 14pt;
+}
+#downloadLink {
+    display: none;
+}
+.content {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+}
+#origImg, #greenImg {
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: 50% 50%;
+    flex-grow: 1;
+}
+#iters {
+    width: 3em;
+}
+#currentIter {
+    display: inline-block;
+    padding-right: 1em;
+    text-align: right;
+    width: 2em;
+}
+#quality {
+    width: 150pt;
+}
+#qualityText {
+    display: inline-block;
+    text-align: right;
+    width: 2em;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <p>Android had <a href="https://github.com/google/skia/commit/c7d01d3e1d3621907c27b283fb7f8b6e177c629d" target="_blank">a bug causing pictures to be a slightly greener after load & save</a>. This WebApp will simulate this process.</p>
+  <p>
+    <label for="imageLoader">Select an image:&#32;</label>
+    <input type="file" id="imageLoader" accept="image/*" />
+    <button id="downloadBtn" disabled="disabled">Download result</button>
+    <a id="downloadLink"></a>
+  </p>
+</div>
+<div class="content">
+  <div id="origImg"></div>
+  <div id="greenImg"></div>
+</div>
+<div class="footer">
+  <p>
+    <label for="iters">Iterations:&#32;</label>
+    <input type="number" id="iterbox" min="0" max="9999" value="16" />
+    <span>&#32;Current:&#32;</span>
+    <span id="currentIter">0</span>
+    <label for="quality">&#32;Quality:&#32;</label>
+    <input type="range" id="quality" min="0" max="101" value="75" />
+    <span>&#32;</span>
+    <span id="qualityText">75%</span>
+  </p>
+  <p>Copyright &copy; 2016 Star Brilliant. All rights reserved.</p>
+</div>
+<script language="javascript">
+(() => {
+    "use strict";
+    const canvas = document.createElement("canvas")
+    const ctx = canvas.getContext("2d")
+    const currentIter = document.getElementById("currentIter")
+    const downloadBtn = document.getElementById("downloadBtn")
+    const downloadLink = document.getElementById("downloadLink")
+    const greenImg = document.getElementById("greenImg")
+    const image = new Image()
+    const imageLoader = document.getElementById("imageLoader")
+    const iterBox = document.getElementById("iterbox")
+    const origImg = document.getElementById("origImg")
+    const qualityBox = document.getElementById("quality")
+    const qualityText = document.getElementById("qualityText")
+    const clamp = x => x >= 0 ? x <= 255 ? x : 255 : 0
+    const clampuv = x => x >= -128 ? x <= 127 ? x : 127 : -128
+    let curiter = 0
+    let iter = 16
+    let quality = 75
+    let imageName = "image"
+    let imageSrc
+    const updateInput = () => {
+        let iter = parseInt(iterBox.value)
+        if(Number.isNaN(iter)) {
+            iter = 16
+        }
+        let quality = parseInt(qualityBox.value)
+        if(Number.isNaN(quality)) {
+            quality = 75
+        }
+        qualityText.innerText = quality <= 100 ? quality + "%" : "lossless"
+        return [iter, quality]
+    }
+    const resetProcess = () => {
+        [iter, quality] = updateInput()
+        downloadBtn.disabled = true
+        curiter = 0
+        currentIter.innerText = 0
+        if(imageSrc) {
+            image.src = imageSrc
+        }
+    }
+    const updateIter = () => {
+        [iter, quality] = updateInput()
+        if(curiter <= iter) {
+            requestAnimationFrame(processImage)
+        } else {
+            resetProcess()
+        }
+    }
+    const processImage = () => {
+        if(curiter == iter) {
+            downloadBtn.disabled = false
+            return
+        }
+        ++curiter
+        canvas.width = image.width
+        canvas.height = image.height
+        ctx.fillStyle = "white"
+        ctx.fillRect(0, 0, image.width, image.height)
+        ctx.drawImage(image, 0, 0)
+        const imageData = ctx.getImageData(0, 0, image.width, image.height)
+        const data = imageData.data
+        for(let p = 0; p < data.length/4; ++p) {
+            let r = data[p*4];
+            let g = data[p*4+1];
+            let b = data[p*4+2];
+            const y = clamp  (( 77*r + 150*g +  29*b) >> 8)
+            const u = clampuv(((-43*r -  85*g + 128*b) >> 8) - 1)
+            const v = clampuv(((128*r - 107*g -  21*b) >> 8) - 1)
+            r = clamp((65536*y           + 91881*v) >> 16)
+            g = clamp((65536*y - 22553*u - 46802*v) >> 16)
+            b = clamp((65536*y + 116130*u         ) >> 16)
+            data[p*4]   = r
+            data[p*4+1] = g
+            data[p*4+2] = b
+        }
+        ctx.putImageData(imageData, 0, 0)
+        const dataURL = quality <= 100 ? canvas.toDataURL("image/jpeg", quality * 0.01) : canvas.toDataURL("image/png")
+        greenImg.style.backgroundImage = `url("${dataURL}")`
+        currentIter.innerText = curiter
+        image.src = dataURL
+    }
+    image.addEventListener("load", () => {
+        requestAnimationFrame(processImage)
+    })
+    imageLoader.addEventListener("change", () => {
+        if(imageLoader.files.length != 0) {
+            const file = imageLoader.files[0]
+            imageName = file.name
+            const reader = new FileReader()
+            reader.addEventListener("load", () => {
+                imageSrc = reader.result
+                greenImg.style.backgroundImage =
+                origImg.style.backgroundImage = `url("${imageSrc}")`
+                resetProcess()
+            })
+            reader.readAsDataURL(file)
+        }
+    })
+    downloadBtn.addEventListener("click", () => {
+        if(image.src) {
+            const dotIndex = imageName.lastIndexOf(".")
+            downloadLink.download = (dotIndex == -1 ? imageName : imageName.substring(0, dotIndex)) + (quality <= 100 ? "_JPEGreen.jpg" : "_JPEGreen.png")
+            downloadLink.href = image.src
+            downloadLink.click()
+        }
+    })
+    iterBox.addEventListener("change", updateIter)
+    iterBox.addEventListener("input", updateInput)
+    qualityBox.addEventListener("change", resetProcess)
+    qualityBox.addEventListener("input", updateInput)
+})()
+</script>
+</body>
+</html>
